@@ -587,6 +587,12 @@ tMBridgeInfo info = {};
     info.__tx_actual_diversity = (info.tx_actual_diversity <= 2) ? info.tx_actual_diversity : 3;
     info.__rx_actual_diversity = (info.rx_actual_diversity <= 2) ? info.rx_actual_diversity : 3;
 
+    info.has_status = 1;
+    info.binding = (bind.IsInBind()) ? 1 : 0;
+    info.connected = (connected()) ? 1 : 0;
+    info.rx_LQ_low = (stats.received_LQ_rc < 65) ? 1 : 0;
+    info.tx_LQ_low = (stats.GetLQ_serial() < 65) ? 1 : 0;
+
     mbridge.SendCommand(MBRIDGE_CMD_INFO, (uint8_t*)&info);
 }
 
@@ -596,7 +602,7 @@ void mbridge_send_DeviceItemTx(void)
 tMBridgeDeviceItem item = {};
 
     item.firmware_version_u16 = version_to_u16(VERSION);
-    item.setup_layout = SETUPLAYOUT;
+    item.setup_layout_u16 = version_to_u16(SETUPLAYOUT);
     strbufstrcpy(item.device_name_20, DEVICE_NAME, 20);
     mbridge.SendCommand(MBRIDGE_CMD_DEVICE_ITEM_TX, (uint8_t*)&item);
 }
@@ -608,11 +614,11 @@ tMBridgeDeviceItem item = {};
 
     if (SetupMetaData.rx_available) {
         item.firmware_version_u16 = version_to_u16(SetupMetaData.rx_firmware_version);
-        item.setup_layout = SetupMetaData.rx_setup_layout;
+        item.setup_layout_u16 = version_to_u16(SetupMetaData.rx_setup_layout);
         strbufstrcpy(item.device_name_20, SetupMetaData.rx_device_name, 20);
     } else {
         item.firmware_version_u16 = 0;
-        item.setup_layout = 0;
+        item.setup_layout_u16 = 0;
         strbufstrcpy(item.device_name_20, "", 20);
     }
     mbridge.SendCommand(MBRIDGE_CMD_DEVICE_ITEM_RX, (uint8_t*)&item);

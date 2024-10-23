@@ -26,10 +26,7 @@
 #error FDCAN_IRQ_PRIORITY not eq DRONECAN_IRQ_PRIORITY !
 #endif
 
-<<<<<<< HEAD
-=======
 extern tRxMavlink mavlink;
->>>>>>> 6a758033410c79bc344e6a867e9dc0d71d2c5f17
 extern tRxDroneCan dronecan;
 
 extern uint16_t micros16(void);
@@ -346,17 +343,14 @@ void tRxDroneCan::SendRcData(tRcData* const rc_out, bool failsafe)
     // this message's quality is used by ArduPilot for setting rssi (not LQ)
     // it goes from 0 ... 255
     // so we use the same conversion as in e.g. RADIO_STATUS, so that ArduPilot shows us (nearly) the same value
-<<<<<<< HEAD
-    _p.rc_input.quality = (connected()) ? rssi_i8_to_ap(stats.GetLastRssi()) : 0;
-    if (connected()) {
-        _p.rc_input.status |= DRONECAN_SENSORS_RC_RCINPUT_STATUS_QUALITY_VALID;
-=======
 
-#define DRONECAN_SENSORS_RC_RCINPUT_STATUS_QUALITY_VALID 1
+#define DRONECAN_SENSORS_RC_RCINPUT_STATUS_QUALITY_TYPE  28 // 4+8+16
 
-#define DRONECAN_SENSORS_RC_RCINPUT_STATUS_QUALITY_LQ 4
-#define DRONECAN_SENSORS_RC_RCINPUT_STATUS_QUALITY_RSSI_DBM 8
-#define DRONECAN_SENSORS_RC_RCINPUT_STATUS_QUALITY_SNR 16
+#define DRONECAN_SENSORS_RC_RCINPUT_QUALITY_TYPE_RSSI  0
+#define DRONECAN_SENSORS_RC_RCINPUT_QUALITY_TYPE_LQ_ACTIVE_ANTENNA  4
+#define DRONECAN_SENSORS_RC_RCINPUT_QUALITY_TYPE_RSSI_DBM  8
+#define DRONECAN_SENSORS_RC_RCINPUT_QUALITY_TYPE_SNR  12
+#define DRONECAN_SENSORS_RC_RCINPUT_QUALITY_TYPE_TX_POWER  16
 
     _p.rc_input.quality = 0;
     if (connected()) {
@@ -366,21 +360,32 @@ void tRxDroneCan::SendRcData(tRcData* const rc_out, bool failsafe)
             INCc(slot, 3);
             if (slot == 1) { // LQ
                 _p.rc_input.quality = stats.GetLQ_rc();
-                _p.rc_input.status |= DRONECAN_SENSORS_RC_RCINPUT_STATUS_QUALITY_LQ;
+                if (stats.last_antenna == ANTENNA_2) _p.rc_input.quality |= 0x80;
+                _p.rc_input.status |= DRONECAN_SENSORS_RC_RCINPUT_QUALITY_TYPE_LQ_ACTIVE_ANTENNA;
             } else
-            if (slot == 2) { // SNR
-                _p.rc_input.quality = 128 + stats.GetLastSnr();
-                _p.rc_input.status |= DRONECAN_SENSORS_RC_RCINPUT_STATUS_QUALITY_SNR;
-            } else { // RSSI_DBM
+            if (slot == 2) { // SNR or TX_POWER
+                static int8_t power_dbm_last = 125;
+                static uint32_t tlast_ms = 0;
+                uint32_t tnow_ms = millis32();
+                int8_t power_dbm = sx.RfPower_dbm();
+                if ((tnow_ms - tlast_ms > 2500) || (power_dbm != power_dbm_last)) {
+                    tlast_ms = tnow_ms;
+                    power_dbm_last = power_dbm;
+                    _p.rc_input.quality = dronecan_cvt_power(power_dbm);
+                    _p.rc_input.status |= DRONECAN_SENSORS_RC_RCINPUT_QUALITY_TYPE_TX_POWER;
+                } else {
+                    _p.rc_input.quality = 128 + stats.GetLastSnr();
+                    _p.rc_input.status |= DRONECAN_SENSORS_RC_RCINPUT_QUALITY_TYPE_SNR;
+                }
+            } else { // slot 0: RSSI_DBM
                 _p.rc_input.quality = crsf_cvt_rssi_rx(stats.GetLastRssi());
-                _p.rc_input.status |= DRONECAN_SENSORS_RC_RCINPUT_STATUS_QUALITY_RSSI_DBM;
+                _p.rc_input.status |= DRONECAN_SENSORS_RC_RCINPUT_QUALITY_TYPE_RSSI_DBM;
             }
         } else {
             // just send RSSI
             _p.rc_input.quality = rssi_i8_to_ap(stats.GetLastRssi());
-            _p.rc_input.status |= DRONECAN_SENSORS_RC_RCINPUT_STATUS_QUALITY_VALID;
         }
->>>>>>> 6a758033410c79bc344e6a867e9dc0d71d2c5f17
+        _p.rc_input.status |= DRONECAN_SENSORS_RC_RCINPUT_STATUS_QUALITY_VALID;
     }
 
     _p.rc_input.rcin.len = 16;
