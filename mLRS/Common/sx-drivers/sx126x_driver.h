@@ -150,12 +150,12 @@ class Sx126xDriverCommon : public Sx126xDriverBase
 
         // set LoRaSymbNumTimeout for false detection of preamble
         // must come in this order, datasheet 14.5 Issuing Commands in the Right Order, p.103
-        SetSymbNumTimeout((config->PreambleLength * 3) >> 2);
+        //fails with corrected reg byte! SetSymbNumTimeout((config->PreambleLength * 3) >> 2);
     }
 
     void SetLoraConfigurationByIndex(uint8_t index)
     {
-        if (index >= sizeof(Sx126xLoraConfiguration)/sizeof(Sx126xLoraConfiguration[0])) while (1) {} // must not happen
+        if (index >= sizeof(Sx126xLoraConfiguration)/sizeof(Sx126xLoraConfiguration[0])) while(1){} // must not happen
 
         lora_configuration = &(Sx126xLoraConfiguration[index]);
         SetLoraConfiguration(lora_configuration);
@@ -190,7 +190,7 @@ class Sx126xDriverCommon : public Sx126xDriverBase
 
     void SetGfskConfigurationByIndex(uint8_t index, uint16_t sync_word)
     {
-        if (index >= sizeof(Sx126xGfskConfiguration)/sizeof(Sx126xGfskConfiguration[0])) while (1) {} // must not happen
+        if (index >= sizeof(Sx126xGfskConfiguration)/sizeof(Sx126xGfskConfiguration[0])) while(1){} // must not happen
 
         gfsk_configuration = &(Sx126xGfskConfiguration[index]);
         SetGfskConfiguration(gfsk_configuration, sync_word);
@@ -218,12 +218,7 @@ class Sx126xDriverCommon : public Sx126xDriverBase
             SetPacketType(SX126X_PACKET_TYPE_GFSK);
         }
 
-        // WORKAROUND: Better Resistance of the SX1262 Tx to Antenna Mismatch,
-        // fixes overly eager PA clamping
-        // see SX1262/SX1268 datasheet, chapter 15 Known Limitations, section 15.2 for details
-        uint8_t data = ReadRegister(SX126X_REG_TX_CLAMP_CONFIG);
-        data |= 0x1E;
-        WriteRegister(SX126X_REG_TX_CLAMP_CONFIG, data);
+        SetTxClampConfig(); // workaround 15.2.2, datasheet p.105
 
         ClearDeviceError(); // XOSC_START_ERR is raised, datasheet 13.3.6 SetDIO3AsTCXOCtrl, p.84
 
@@ -242,7 +237,7 @@ class Sx126xDriverCommon : public Sx126xDriverBase
             case SX_FHSS_CONFIG_FREQUENCY_BAND_433_MHZ: CalibrateImage(SX126X_CAL_IMG_430_MHZ_1, SX126X_CAL_IMG_430_MHZ_2); break;
             case SX_FHSS_CONFIG_FREQUENCY_BAND_70_CM_HAM: CalibrateImage(SX126X_CAL_IMG_430_MHZ_1, SX126X_CAL_IMG_430_MHZ_2); break;
             default:
-                while (1) {}  // protection
+                while(1){} // protection
         }
 
         // set DIO2 as RF control switching
@@ -255,7 +250,11 @@ class Sx126xDriverCommon : public Sx126xDriverBase
         SetRxGain(SX126X_RX_GAIN_BOOSTED_GAIN);
         SetOverCurrentProtection(SX126X_OCP_CONFIGURATION_140_MA); // default for SX1262 according to data sheet, but can't hurt
 
+#ifdef POWER_USE_PA_CONFIG_10_DBM 
+        SetPaConfig_10dbm();
+#else
         SetPaConfig_22dbm();
+#endif
 
         SetRfPower_dbm(gconfig->Power_dbm);
 
@@ -291,7 +290,7 @@ class Sx126xDriverCommon : public Sx126xDriverBase
     {
         WriteBuffer(0, data, len);
         ClearIrqStatus(SX126X_IRQ_ALL);
-        SetTx(tmo_ms * 64); // 0 = no timeout. TimeOut period inn ms. sx1262 have static 15p625 period base, so for 1 ms needs 64 tmo value
+        SetTx(tmo_ms * 64); // 0 = no timeout. TimeOut period in ms. sx1262 have static 15p625 period base, so for 1 ms needs 64 tmo value
     }
 
     void SetToRx(uint16_t tmo_ms)
@@ -340,7 +339,7 @@ class Sx126xDriverCommon : public Sx126xDriverBase
 
         if (gconfig->modeIsLora()) {
             uint8_t index = gconfig->LoraConfigIndex;
-            if (index >= sizeof(Sx126xLoraConfiguration)/sizeof(Sx126xLoraConfiguration[0])) while (1) {} // must not happen
+            if (index >= sizeof(Sx126xLoraConfiguration)/sizeof(Sx126xLoraConfiguration[0])) while(1){} // must not happen
             lora_configuration = &(Sx126xLoraConfiguration[index]);
         } else {
             gfsk_configuration = &(Sx126xGfskConfiguration[0]);
