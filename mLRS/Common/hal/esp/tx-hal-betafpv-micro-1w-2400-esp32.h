@@ -223,21 +223,16 @@ IRAM_ATTR void led_blue_toggle(void)
 
 //-- Display I2C
 
-#define I2C_SDA_IO                IO_P22
+#define I2C_SDA_IO                IO_P33
 #define I2C_SCL_IO                IO_P32
 #define I2C_CLOCKSPEED            1000000L  // fix - rather too much, but helps with LQ, ESP32 max speed
 #define I2C_BUFFER_SIZE           1024
 
 
 //-- 5 Way Switch
-
-#define FIVEWAY_ADC_IO            IO_P25
-#define KEY_RIGHT_THRESH          3511 // 3600 // tom = ELRS: 3511, ow: 3712
-#define KEY_UP_THRESH             2839 // 2800 // tom = ELRS: 2839, ow: 2966, marc: 2800 didn't work for him. 2839 did
-#define KEY_DOWN_THRESH           2191 // 2200 // tom = ELRS: 2191, ow: 2282
-#define KEY_LEFT_THRESH           1616 // 1650 // tom = ELRS: 1616, ow: 1685
-#define KEY_CENTER_THRESH         0
-
+//"joystick_values": [814,2108,1422,1822,0,4095],
+#define FIVEWAY_ADC_IO            IO_P0
+#define KEY_DOWN_THRESH           2108
 #if defined DEVICE_HAS_I2C_DISPLAY || defined DEVICE_HAS_I2C_DISPLAY_ROT180 || defined DEVICE_HAS_FIVEWAY
 
 void fiveway_init(void) {} // no init needed to read an analog pin in Arduino
@@ -253,11 +248,12 @@ IRAM_ATTR uint8_t fiveway_read(void)
     // BetaFPV 1W Micro seems to have pretty widely varying resistor values, 
     // so we do a less strict method here
     // Attention: this needs to be ordered!
-    if (adc < (( 0 + KEY_LEFT_THRESH) / 2)) return (1 << KEY_CENTER);
-    if (adc < ((KEY_LEFT_THRESH + KEY_DOWN_THRESH) / 2)) return (1 << KEY_LEFT); 
-    if (adc < ((KEY_DOWN_THRESH + KEY_UP_THRESH) / 2)) return (1 << KEY_DOWN);
-    if (adc < ((KEY_UP_THRESH + KEY_RIGHT_THRESH) / 2)) return (1 << KEY_UP);
-    if (adc < ((KEY_RIGHT_THRESH + 4095) / 2)) return (1 << KEY_RIGHT);
+    // uint8_t center_pressed = gpio_read_activelow(FIVEWAY_SWITCH_CENTER);
+    if (adc > (814 - 100) && adc < (814 + 100)) return (1 << KEY_UP); // 655
+    if (adc > (2108 - 100) && adc < (2108 + 100)) return (1 << KEY_DOWN); // 15552.312.311.921.2
+    if (adc > (1422 - 100) && adc < (1422 + 100)) return (1 << KEY_LEFT); // 2555
+    if (adc > (1822 - 100) && adc < (1822 + 100)) return (1 << KEY_RIGHT); // 3555
+    if (adc < 100) return (1 << KEY_CENTER);
     return 0;
 }
 #endif
@@ -309,18 +305,6 @@ IRAM_ATTR void fan_set_power(int8_t power_dbm)
 
 //-- POWER
 
-#define POWER_GAIN_DBM            32 // 28 // gain of a PA stage if present
-#define POWER_SX1280_MAX_DBM      SX1280_POWER_3_DBM  // maximum allowed sx power
-#define POWER_USE_DEFAULT_RFPOWER_CALC
-
-#define RFPOWER_DEFAULT           0 // index into rfpower_list array
-
-const rfpower_t rfpower_list[] = {
-    { .dbm = POWER_MIN, .mW = INT8_MIN },
-    { .dbm = POWER_17_DBM, .mW = 50 },
-    { .dbm = POWER_20_DBM, .mW = 100 },
-    { .dbm = POWER_24_DBM, .mW = 250 },
-    { .dbm = POWER_27_DBM, .mW = 500 },
-    { .dbm = POWER_30_DBM, .mW = 1000 },
-};
+#define POWER_PA_E28_2G4M27SX
+#include "../hal-power-pa.h"
 

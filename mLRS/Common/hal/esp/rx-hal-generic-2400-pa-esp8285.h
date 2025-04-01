@@ -10,7 +10,7 @@
 // ESP8285, ELRS GENERIC 2400 PA RX
 //-------------------------------------------------------
 
-#define DEVICE_HAS_SINGLE_LED
+#define DEVICE_HAS_SINGLE_LED_RGB
 #define DEVICE_HAS_NO_DEBUG
 //#define DEVICE_HAS_SERIAL_OR_DEBUG
 
@@ -93,12 +93,81 @@ IRAM_ATTR bool button_pressed(void)
 
 
 //-- LEDs
+#include <NeoPixelBus.h>
+#define LED_RED                    IO_P16
+bool ledRedState;
+bool ledGreenState;
+bool ledBlueState;
 
-#define LED_RED                   IO_P16
+NeoPixelBus<NeoGrbFeature, NeoEsp32I2s0Ws2812xMethod> ledRGB(1, LED_RED);
 
 void leds_init(void)
 {
-    gpio_init(LED_RED, IO_MODE_OUTPUT_PP_LOW);
+    ledRGB.Begin();
+    ledRGB.Show();
+}
+
+IRAM_ATTR void led_red_off(void)
+{
+    if (!ledRedState) return;
+    ledRGB.SetPixelColor(0, RgbColor(0, 0, 0));
+    ledRGB.Show();
+    ledRedState = 0;
+}
+
+IRAM_ATTR void led_red_on(void)
+{
+    if (ledRedState) return;
+    ledRGB.SetPixelColor(0, RgbColor(255, 0, 0));
+    ledRGB.Show();
+    ledRedState = 1;
+}
+
+IRAM_ATTR void led_red_toggle(void)
+{
+    if (ledRedState) { led_red_off(); } else { led_red_on(); }
+}
+
+IRAM_ATTR void led_green_off(void)
+{
+    if (!ledGreenState) return;
+    ledRGB.SetPixelColor(0, RgbColor(0, 0, 0));
+    ledRGB.Show();
+    ledGreenState = 0;
+}
+
+IRAM_ATTR void led_green_on(void)
+{
+    if (ledGreenState) return;
+    ledRGB.SetPixelColor(0, RgbColor(0, 255, 0));
+    ledRGB.Show();
+    ledGreenState = 1;
+}
+
+IRAM_ATTR void led_green_toggle(void)
+{
+    if (ledGreenState) { led_green_off(); } else { led_green_on(); }
+}
+
+IRAM_ATTR void led_blue_off(void)
+{
+    if (!ledBlueState) return;
+    ledRGB.SetPixelColor(0, RgbColor(0, 0, 0));
+    ledRGB.Show();
+    ledBlueState = 0;
+}
+
+IRAM_ATTR void led_blue_on(void)
+{
+    if (ledBlueState) return;
+    ledRGB.SetPixelColor(0, RgbColor(0, 0, 255));
+    ledRGB.Show();
+    ledBlueState = 1;
+}
+
+IRAM_ATTR void led_blue_toggle(void)
+{
+    if (ledBlueState) { led_blue_off(); } else { led_blue_on(); }
 }
 
 IRAM_ATTR void led_red_off(void) { gpio_low(LED_RED); }
@@ -107,19 +176,6 @@ IRAM_ATTR void led_red_toggle(void) { gpio_toggle(LED_RED); }
 
 
 //-- POWER
-#ifndef POWER_OVERLAY
 
-#define POWER_GAIN_DBM            18 // gain of a PA stage if present
-#define POWER_SX1280_MAX_DBM      SX1280_POWER_3_DBM  // maximum allowed sx power
-#define POWER_USE_DEFAULT_RFPOWER_CALC
-
-#define RFPOWER_DEFAULT           1 // index into rfpower_list array
-
-const rfpower_t rfpower_list[] = {
-    { .dbm = POWER_MIN, .mW = INT8_MIN },
-    { .dbm = POWER_10_DBM, .mW = 10 },
-    { .dbm = POWER_17_DBM, .mW = 50 },
-    { .dbm = POWER_20_DBM, .mW = 100 },
-};
-
-#endif // !POWER_OVERLAY
+#define POWER_PA_E28_2G4M27SX
+#include "../hal-power-pa.h"
