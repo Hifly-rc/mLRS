@@ -45,7 +45,7 @@ In tx-hal files:
 #define DEVICE_HAS_IN_INVERTED      // board has an IN port, which supports only inverted UART signals
 #define DEVICE_HAS_IN_ON_JRPIN5_RX  // board shares IN with JRPin5 on RX pin, implies support of normal and inverted UART signals
 #define DEVICE_HAS_IN_ON_JRPIN5_TX  // board shares IN with JRPin5 on TX pin, implies support of normal and inverted UART signals
-#define DEVICE_HAS_SERIAL_OR_COM    // board has UART which is shared between Serial or Com, selected by e.g. a switch
+#define DEVICE_HAS_SERIAL_OR_COM    // board has UART (or USB) which is shared between Serial or Com, selected by e.g. a switch
 #define DEVICE_HAS_NO_SERIAL        // board has no Serial port
 #define DEVICE_HAS_SERIAL_ON_USB    // board has the Serial port on native USB
 #define DEVICE_HAS_NO_COM           // board has no Com port
@@ -61,11 +61,14 @@ In tx-hal files:
 #define DEVICE_HAS_SERIAL2          // board has a Serial2 port
 #define DEVICE_HAS_ESP_WIFI_BRIDGE_ON_SERIAL  // board has ESP32 or ESp82xx with RESET,GPIO support, on Serial port
 #define DEVICE_HAS_ESP_WIFI_BRIDGE_ON_SERIAL2 // board has ESP32 or ESp82xx with RESET,GPIO support, on Serial2 port
+#define DEVICE_HAS_ESP_WIFI_BRIDGE_W_PASSTHRU_VIA_JRPIN5  // board has ESP32 or ESp82xx with its passthrough via JRPin5 port
 #define DEVICE_HAS_ESP_WIFI_BRIDGE_CONFIGURE  // board has ESP32 which allows configuration
 #define DEVICE_HAS_HC04_MODULE_ON_SERIAL      // board has HC04 module on Serial port
 #define DEVICE_HAS_HC04_MODULE_ON_SERIAL2     // board has HC04 module on Serial2 port
 #define DEVICE_HAS_SYSTEMBOOT       // board has a means to invoke the system bootloader on startup
 #define DEVICE_HAS_SINGLE_LED       // board has only one LED
+#define DEVICE_HAS_SINGLE_LED_RGB   // board has only one LED which is RGB WS2812, and thus can do more colors
+#define DEVICE_HAS_NO_LED           // board has no LEDs at all
 
 In rx-hal files:
 
@@ -263,6 +266,7 @@ Note: Some "high-level" features are set for each device in the device_conf.h fi
 
 //-------------------------------------------------------
 // Derived Defines
+// The "derived" defines digest DEVICE_HAS_XXX defines and set USE_XXX defines based on them.
 //-------------------------------------------------------
 // should go somewhere else !?
 
@@ -357,6 +361,9 @@ Note: Some "high-level" features are set for each device in the device_conf.h fi
   #if defined ESP_DTR && defined ESP_RTS
     #define USE_ESP_WIFI_BRIDGE_DTR_RTS
   #endif
+  #if defined ESP_BOOT0
+    #define USE_ESP_WIFI_BRIDGE_BOOT0
+  #endif
 #endif
 
 #if defined DEVICE_HAS_HC04_MODULE_ON_SERIAL || defined DEVICE_HAS_HC04_MODULE_ON_SERIAL2
@@ -368,6 +375,8 @@ Note: Some "high-level" features are set for each device in the device_conf.h fi
   #define SX_DRIVER Sx126xDriver
 #elif defined DEVICE_HAS_SX127x
   #define SX_DRIVER Sx127xDriver
+#elif defined DEVICE_HAS_LR11xx
+  #define SX_DRIVER Lr11xxDriver
 #else
   #define SX_DRIVER Sx128xDriver
 #endif
@@ -377,6 +386,8 @@ Note: Some "high-level" features are set for each device in the device_conf.h fi
     #define SX2_DRIVER Sx126xDriver2
   #elif defined DEVICE_HAS_SX127x
     #define SX2_DRIVER Sx127xDriver2
+  #elif defined DEVICE_HAS_LR11xx
+    #define SX2_DRIVER Lr11xxDriver2
   #else
     #define SX2_DRIVER Sx128xDriver2
   #endif
@@ -436,9 +447,9 @@ Note: Some "high-level" features are set for each device in the device_conf.h fi
   #error Must be either transmitter or receiver !
 #endif
 
-#if !defined DEVICE_HAS_SX128x && !defined DEVICE_HAS_SX127x && !defined DEVICE_HAS_SX126x && \
+#if !defined DEVICE_HAS_SX128x && !defined DEVICE_HAS_SX127x && !defined DEVICE_HAS_SX126x && !defined DEVICE_HAS_LR11xx && \
     !defined DEVICE_HAS_DUAL_SX126x_SX128x && !defined DEVICE_HAS_DUAL_SX126x_SX126x
-  #error Must be either SX128x or SX127x or SX126x !
+  #error Must be either SX128x or SX127x or SX126x or LR11xx !
 #endif
 
 #if !defined FREQUENCY_BAND_2P4_GHZ && \
@@ -462,6 +473,10 @@ Note: Some "high-level" features are set for each device in the device_conf.h fi
   void systembootloader_init(void) {}
 #endif
 
+#ifdef DEVICE_HAS_NO_LED
+  void leds_init(void) {}
+#endif
+
 #ifndef USE_ESP_WIFI_BRIDGE
   void esp_init(void) {}
 #endif
@@ -469,5 +484,6 @@ Note: Some "high-level" features are set for each device in the device_conf.h fi
 #if !defined DEVICE_HAS_FIVEWAY && !defined USE_DISPLAY
   void fiveway_init(void) {}
 #endif
+
 
 #endif // HAL_H

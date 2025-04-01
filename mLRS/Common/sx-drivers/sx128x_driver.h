@@ -21,23 +21,6 @@
 // SX Driver
 //-------------------------------------------------------
 
-typedef struct
-{
-    uint8_t Bandwidth;
-    uint8_t CodingRate;
-    uint8_t Bt;
-    uint8_t AGCPreambleLength;
-    uint8_t SyncWordLength;
-    uint8_t SyncWordMatch;
-    uint8_t PacketType;
-    uint8_t PayloadLength;
-    uint8_t CrcLength;
-    uint16_t CrcSeed;
-    uint32_t TimeOverAir; // in us
-    int16_t ReceiverSensitivity;
-} tSxFlrcConfiguration;
-
-
 const tSxLoraConfiguration Sx128xLoraConfiguration[] = {
     { .SpreadingFactor = SX1280_LORA_SF5,
       .Bandwidth = SX1280_LORA_BW_800,
@@ -112,6 +95,7 @@ class Sx128xDriverCommon : public Sx128xDriverBase
   public:
     void Init(void)
     {
+        gconfig = nullptr;
         lora_configuration = nullptr;
         flrc_configuration = nullptr;
     }
@@ -147,6 +131,8 @@ class Sx128xDriverCommon : public Sx128xDriverBase
 
     void ResetToLoraConfiguration(void)
     {
+        if (!gconfig) while(1){} // must not happen
+
         SetStandby(SX1280_STDBY_CONFIG_STDBY_RC);
         delay_us(1000); // seems ok without, but do it
         SetPacketType(SX1280_PACKET_TYPE_LORA);
@@ -180,12 +166,16 @@ class Sx128xDriverCommon : public Sx128xDriverBase
 
     void SetRfPower_dbm(int8_t power_dbm)
     {
-        RfPowerCalc(power_dbm, &sx_power, &actual_power_dbm);
+        if (!gconfig) return;
+
+        _rfpower_calc(power_dbm, &sx_power, &actual_power_dbm);
         SetTxParams(sx_power, SX1280_RAMPTIME_04_US);
     }
 
     void UpdateRfPower(tSxGlobalConfig* const global_config)
     {
+        if (!gconfig) return;
+
         gconfig->Power_dbm = global_config->Power_dbm;
         SetRfPower_dbm(gconfig->Power_dbm);
     }
@@ -262,6 +252,8 @@ class Sx128xDriverCommon : public Sx128xDriverBase
 
     void GetPacketStatus(int8_t* const RssiSync, int8_t* const Snr)
     {
+        if (!gconfig) { *RssiSync = -127; *Snr = 0; return; } // should not happen in practice
+
         int16_t rssi;
 
         if (gconfig->modeIsLora()) {
@@ -282,14 +274,14 @@ class Sx128xDriverCommon : public Sx128xDriverBase
 
     //-- RF power interface
 
-    virtual void RfPowerCalc(int8_t power_dbm, uint8_t* sx_power, int8_t* actual_power_dbm) = 0;
+    virtual void _rfpower_calc(int8_t power_dbm, uint8_t* sx_power, int8_t* actual_power_dbm) = 0;
 
     //-- helper
 
-    void config_calc(void)
+    void _config_calc(void)
     {
         int8_t power_dbm = gconfig->Power_dbm;
-        RfPowerCalc(power_dbm, &sx_power, &actual_power_dbm);
+        _rfpower_calc(power_dbm, &sx_power, &actual_power_dbm);
 
         if (gconfig->modeIsLora()) {
             uint8_t index = gconfig->LoraConfigIndex;
@@ -303,29 +295,35 @@ class Sx128xDriverCommon : public Sx128xDriverBase
     // cumbersome to calculate in general, so use hardcoded for a specific settings
     uint32_t TimeOverAir_us(void)
     {
-        if (lora_configuration == nullptr && flrc_configuration == nullptr) config_calc(); // ensure it is set
+        if (!gconfig) return 0; // should not happen in practice
+
+        if (lora_configuration == nullptr && flrc_configuration == nullptr) _config_calc(); // ensure it is set
 
         return (gconfig->modeIsLora()) ? lora_configuration->TimeOverAir : flrc_configuration->TimeOverAir;
     }
 
     int16_t ReceiverSensitivity_dbm(void)
     {
-        if (lora_configuration == nullptr && flrc_configuration == nullptr) config_calc(); // ensure it is set
+        if (!gconfig) return 0; // should not happen in practice
+
+        if (lora_configuration == nullptr && flrc_configuration == nullptr) _config_calc(); // ensure it is set
 
         return (gconfig->modeIsLora()) ? lora_configuration->ReceiverSensitivity : flrc_configuration->ReceiverSensitivity;
     }
 
     int8_t RfPower_dbm(void)
     {
-        if (lora_configuration == nullptr && flrc_configuration == nullptr) config_calc(); // ensure it is set
+        if (!gconfig) return 0; // should not happen in practice
+
+        if (lora_configuration == nullptr && flrc_configuration == nullptr) _config_calc(); // ensure it is set
 
         return actual_power_dbm;
     }
 
   private:
+    tSxGlobalConfig* gconfig;
     const tSxLoraConfiguration* lora_configuration;
     const tSxFlrcConfiguration* flrc_configuration;
-    tSxGlobalConfig* gconfig;
     uint8_t sx_power;
     int8_t actual_power_dbm;
 };
@@ -392,9 +390,13 @@ class Sx128xDriver : public Sx128xDriverCommon
 
     //-- RF power interface
 
-    void RfPowerCalc(int8_t power_dbm, uint8_t* sx_power, int8_t* actual_power_dbm) override
+    void _rfpower_calc(int8_t power_dbm, uint8_t* sx_power, int8_t* actual_power_dbm) override
     {
+#ifdef POWER_USE_DEFAULT_RFPOWER_CALC
         sx1280_rfpower_calc(power_dbm, sx_power, actual_power_dbm, POWER_GAIN_DBM, POWER_SX1280_MAX_DBM);
+#else
+        sx1280_rfpower_calc(power_dbm, sx_power, actual_power_dbm);
+#endif
     }
 
     //-- init API functions
@@ -443,14 +445,14 @@ class Sx128xDriver : public Sx128xDriverCommon
 
     //-- this are the API functions used in the loop
 
-    void SendFrame(uint8_t* const data, uint8_t len, uint16_t tmo_ms = 0)
+    void SendFrame(uint8_t* const data, uint8_t len, uint16_t tmo_ms)
     {
         sx_amp_transmit();
         Sx128xDriverCommon::SendFrame(data, len, tmo_ms);
         delay_us(125); // may not be needed if busy available
     }
 
-    void SetToRx(uint16_t tmo_ms = 0)
+    void SetToRx(uint16_t tmo_ms)
     {
         sx_amp_receive();
         Sx128xDriverCommon::SetToRx(tmo_ms);
@@ -537,12 +539,18 @@ class Sx128xDriver2 : public Sx128xDriverCommon
 
     //-- RF power interface
 
-    void RfPowerCalc(int8_t power_dbm, uint8_t* sx_power, int8_t* actual_power_dbm) override
+    void _rfpower_calc(int8_t power_dbm, uint8_t* sx_power, int8_t* actual_power_dbm) override
     {
 #ifdef DEVICE_HAS_DUAL_SX126x_SX128x
+  #ifdef POWER2_USE_DEFAULT_RFPOWER_CALC
         sx1280_rfpower_calc(power_dbm, sx_power, actual_power_dbm, POWER2_GAIN_DBM, POWER2_SX1280_MAX_DBM);
-#else
+  #else
+        sx1280_rfpower_calc(power_dbm, sx_power, actual_power_dbm);
+  #endif
+#elif defined POWER_USE_DEFAULT_RFPOWER_CALC
         sx1280_rfpower_calc(power_dbm, sx_power, actual_power_dbm, POWER_GAIN_DBM, POWER_SX1280_MAX_DBM);
+#else
+        sx1280_rfpower_calc(power_dbm, sx_power, actual_power_dbm);
 #endif
     }
 
@@ -599,14 +607,14 @@ class Sx128xDriver2 : public Sx128xDriverCommon
 
     //-- this are the API functions used in the loop
 
-    void SendFrame(uint8_t* const data, uint8_t len, uint16_t tmo_ms = 0)
+    void SendFrame(uint8_t* const data, uint8_t len, uint16_t tmo_ms)
     {
         sx2_amp_transmit();
         Sx128xDriverCommon::SendFrame(data, len, tmo_ms);
         delay_us(125); // may not be needed if busy available
     }
 
-    void SetToRx(uint16_t tmo_ms = 0)
+    void SetToRx(uint16_t tmo_ms)
     {
         sx2_amp_receive();
         Sx128xDriverCommon::SetToRx(tmo_ms);

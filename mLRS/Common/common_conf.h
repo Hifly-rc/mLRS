@@ -11,9 +11,9 @@
 #pragma once
 
 
-#define VERSION             10303 // leading zero makes it octal!
-#define VERSIONONLYSTR      "v1.3.03"
-#define SETUPLAYOUT         335 // this should be changed then Setup struct and/or serial changes
+#define VERSION             10305 // leading zero makes it octal!
+#define VERSIONONLYSTR      "v1.3.05"
+#define SETUPLAYOUT         10304 // this should be changed then Setup struct and/or serial changes
 
 
 //-------------------------------------------------------
@@ -147,8 +147,9 @@
 #define RX_SERIAL_RXBUFSIZE             2048 // ArduPilot also can be rude
 
 #define TX_COM_BAUDRATE                 115200
-#define TX_COM_TXBUFSIZE                2048 // cli needs more than 1024
-#define TX_COM_TXBUFSIZE_SMALL          512 // we don't have enough RAM
+#define TX_COM_TXBUFSIZE                512 // 2048 // cli needs more than 1024   since 4.2.2025 we have cli chunks
+#define TX_COM_TXBUFSIZE_SMALL          256 // 512 // we don't have enough RAM
+#define TX_COM_TXBUFSIZE_LARGE          2048 // we have plenty and can easily afford
 #define TX_COM_RXBUFSIZE                512
 
 

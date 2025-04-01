@@ -98,6 +98,11 @@ class tMBridge : public tPin5BridgeBase, public tSerialBase
     uint8_t cmd_in_process;
     uint8_t ack_cmd;
     bool ack_ok;
+
+    // momentarily for debug, detect discarded bytes
+#ifdef USE_DEBUG
+    uint16_t discarded = 0;
+#endif
 };
 
 tMBridge mbridge;
@@ -107,8 +112,8 @@ tMBridge mbridge;
 // MBridge half-duplex interface, used for radio <-> mLRS tx module
 
 // to avoid error: ISO C++ forbids taking the address of a bound member function to form a pointer to member function
-void mbridge_uart_rx_callback(uint8_t c) { mbridge.uart_rx_callback(c); }
-void mbridge_uart_tc_callback(void) { mbridge.uart_tc_callback(); }
+void mbridge_pin5_rx_callback(uint8_t c) { mbridge.pin5_rx_callback(c); }
+void mbridge_pin5_tc_callback(void) { mbridge.pin5_tc_callback(); }
 
 
 // is called in isr context
@@ -136,14 +141,16 @@ bool tMBridge::transmit_start(void)
 
 // is called in isr context
 // we can assume that there is at least one byte available
+// send in one chunk to help ensure it is transmitted with no gaps
 uint8_t tMBridge::send_serial(void)
 {
-    pin5_putc(0x00); // we can send anything we want which is not a command, send 0x00 so it is easy to recognize
-    for (uint8_t i = 0; i < MBRIDGE_M2R_SERIAL_PAYLOAD_LEN_MAX; i++) {
-        uint8_t c = serial_getc();
-        pin5_putc(c);
-        if (!serial_rx_available()) break;
+    uint8_t buf[MBRIDGE_M2R_SERIAL_PAYLOAD_LEN_MAX + 1];
+    uint8_t cnt = 0;
+    buf[cnt++] = 0x00; // we can send anything we want which is not a command, send 0x00 so it is easy to recognize
+    while (serial_rx_available() && cnt < (MBRIDGE_M2R_SERIAL_PAYLOAD_LEN_MAX + 1)) {
+        buf[cnt++] = serial_getc();
     }
+    pin5_putbuf(buf, cnt);
     return 1;
 }
 
@@ -151,10 +158,7 @@ uint8_t tMBridge::send_serial(void)
 // is called in isr context
 void tMBridge::send_command(void)
 {
-    for (uint8_t i = 0; i < cmd_m2r_available; i++) {
-        uint8_t c = cmd_m2r_frame[i];
-        pin5_putc(c);
-    }
+    pin5_putbuf(cmd_m2r_frame, cmd_m2r_available);
 }
 
 
@@ -175,7 +179,20 @@ void tMBridge::parse_nextchar(uint8_t c)
 
     switch (state) {
     case STATE_IDLE:
-        if (c == MBRIDGE_STX1) state = STATE_RECEIVE_MBRIDGE_STX2;
+        if (c == MBRIDGE_STX1) {
+            state = STATE_RECEIVE_MBRIDGE_STX2;
+#ifdef USE_DEBUG
+            if (discarded) {
+                if (discarded > 1) {
+                    dbg.puts(u16toBCD_s(discarded));
+                    dbg.puts(" bytes lost!\n");
+                }
+                discarded = 0;
+            }
+        } else {
+            discarded++;
+#endif
+        }
         break;
 
     case STATE_RECEIVE_MBRIDGE_STX2:
@@ -324,8 +341,8 @@ void tMBridge::Init(bool enable_flag, bool crsf_emulation_flag)
     cmd_in_process = 0;
 
     if (!crsf_emulation) {
-        uart_rx_callback_ptr = &mbridge_uart_rx_callback;
-        uart_tc_callback_ptr = &mbridge_uart_tc_callback;
+        uart_rx_callback_ptr = &mbridge_pin5_rx_callback;
+        uart_tc_callback_ptr = &mbridge_pin5_tc_callback;
 
         tPin5BridgeBase::Init();
         tSerialBase::Init();
@@ -569,8 +586,15 @@ tMBridgeInfo info = {};
 
     info.tx_config_id = Config.ConfigId;
 
-    info.receiver_sensitivity = sx.ReceiverSensitivity_dbm(); // is equal for Tx and Rx
-    info.tx_actual_power_dbm = sx.RfPower_dbm();
+    if (!TRANSMIT_USE_ANTENNA1) {
+        // Config.Diversity = DIVERSITY_ANTENNA2, DIVERSITY_R_ENABLED_T_ANTENNA2
+        info.receiver_sensitivity = sx2.ReceiverSensitivity_dbm();
+        info.tx_actual_power_dbm = sx2.RfPower_dbm();
+    } else {
+        // Config.Diversity = DIVERSITY_DEFAULT, DIVERSITY_ANTENNA1, DIVERSITY_R_ENABLED_T_ANTENNA1
+        info.receiver_sensitivity = sx.ReceiverSensitivity_dbm(); // is equal for Tx and Rx
+        info.tx_actual_power_dbm = sx.RfPower_dbm();
+    }
     info.tx_actual_diversity = Config.Diversity;
 
     if (SetupMetaData.rx_available) {
@@ -583,15 +607,13 @@ tMBridgeInfo info = {};
         info.rx_actual_diversity = DIVERSITY_NUM; // 5 = invalid
     }
 
-    // we try to also set the deprecated fields to something reasonable, to help with transition
-    info.__tx_actual_diversity = (info.tx_actual_diversity <= 2) ? info.tx_actual_diversity : 3;
-    info.__rx_actual_diversity = (info.rx_actual_diversity <= 2) ? info.rx_actual_diversity : 3;
-
-    info.has_status = 1;
+    info.has_status = 1; // to indicate it has these flags
     info.binding = (bind.IsInBind()) ? 1 : 0;
     info.connected = (connected()) ? 1 : 0;
     info.rx_LQ_low = (stats.received_LQ_rc < 65) ? 1 : 0;
     info.tx_LQ_low = (stats.GetLQ_serial() < 65) ? 1 : 0;
+
+    info.param_num = SETUP_PARAMETER_NUM; // known if non-zero
 
     mbridge.SendCommand(MBRIDGE_CMD_INFO, (uint8_t*)&info);
 }

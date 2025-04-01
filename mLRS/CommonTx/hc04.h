@@ -15,6 +15,11 @@
 #include <ctype.h>
 
 
+#if defined DEVICE_HAS_HC04_MODULE_ON_SERIAL && defined USE_COM_ON_SERIAL
+  #error HC04 bluetooth module is on serial but board has serial/com !
+#endif
+
+
 //-------------------------------------------------------
 // HC04 Bridge class
 //-------------------------------------------------------
@@ -25,7 +30,6 @@ class tTxHc04Bridge
 {
   public:
     void Init(tSerialBase* const _comport, tSerialBase* const _serialport, uint32_t const _serial_baudrate) {}
-    uint8_t Task(void) { return TX_TASK_NONE; }
 
     void EnterPassthrough(void) {}
     void SetPin(uint16_t pin) {}
@@ -34,6 +38,7 @@ class tTxHc04Bridge
 #else
 
 extern volatile uint32_t millis32(void);
+extern tLEDs leds;
 extern tTxDisp disp;
 
 
@@ -41,7 +46,6 @@ class tTxHc04Bridge
 {
   public:
     void Init(tSerialBase* const _comport, tSerialBase* const _serialport, uint32_t const _serial_baudrate);
-    uint8_t Task(void);
 
     void EnterPassthrough(void);
     void SetPin(uint16_t pin);
@@ -56,8 +60,6 @@ class tTxHc04Bridge
     tSerialBase* com;
     tSerialBase* ser;
     uint32_t ser_baud;
-
-    uint8_t task_pending;
 };
 
 
@@ -67,17 +69,7 @@ void tTxHc04Bridge::Init(tSerialBase* const _comport, tSerialBase* const _serial
     ser = _serialport;
     ser_baud = _serial_baudrate;
 
-    task_pending = TX_TASK_NONE;
-
     run_autoconfigure();
-}
-
-
-uint8_t tTxHc04Bridge::Task(void)
-{
-    uint8_t task = task_pending;
-    task_pending = TX_TASK_NONE;
-    return task;
 }
 
 
@@ -115,7 +107,7 @@ void tTxHc04Bridge::passthrough_do(void)
 {
     ser->SetBaudRate(ser_baud);
     ser->flush();
-#if defined DEVICE_HAS_SERIAL_OR_COM && defined DEVICE_HAS_HC04_MODULE_ON_SERIAL2
+#if defined DEVICE_HAS_HC04_MODULE_ON_SERIAL2 && defined USE_COM_ON_SERIAL
     ser_or_com_set_to_com();
 #endif
 
@@ -123,8 +115,7 @@ void tTxHc04Bridge::passthrough_do(void)
     disp.DrawNotify("HC04\nPASSTHRU");
 
     while (1) {
-        if (doSysTask) {
-            doSysTask = 0;
+        if (doSysTask()) {
             leds.TickPassthrough_ms();
         }
 

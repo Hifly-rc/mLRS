@@ -32,6 +32,7 @@ typedef enum {
     POWER_10_DBM    = 10, // 10 mW
     POWER_12_DBM    = 12, // 16 mW
     POWER_12p5_DBM  = 13, // 18 mW
+    POWER_14_DBM    = 14, // 25 mW
     POWER_17_DBM    = 17, // 50 mW
     POWER_20_DBM    = 20, // 100 mW
     POWER_22_DBM    = 22, // 158 mW
@@ -65,6 +66,7 @@ class tSerialBase
     virtual void InitOnce(void) {}
     virtual void Init(void) {}
     virtual void SetBaudRate(uint32_t baud) {}
+    virtual bool full(void) { return false; }
     virtual void putbuf(uint8_t* const buf, uint16_t len) {}
     virtual bool available(void) { return false; }
     virtual char getc(void) { return '\0'; }
@@ -158,8 +160,9 @@ uint8_t crsf_cvt_mode(uint8_t mode);
 uint8_t crsf_cvt_fps(uint8_t mode);
 uint8_t crsf_cvt_rssi_rx(int8_t rssi_i8);
 uint8_t crsf_cvt_rssi_tx(int8_t rssi_i8);
-uint8_t crsf_cvt_rssi_percent(int8_t rssi, int16_t receiver_sensitivity_dbm);
+uint8_t crsf_cvt_rssi_percent(int8_t rssi_i8, int16_t receiver_sensitivity_dbm);
 
+#define CRSF_CRC8_INIT  0
 uint8_t crsf_crc8_calc(uint8_t crc, uint8_t data);
 uint8_t crsf_crc8_update(uint8_t crc, const void* buf, uint16_t len);
 
@@ -167,6 +170,13 @@ uint8_t crsf_crc8_update(uint8_t crc, const void* buf, uint16_t len);
 //-- DroneCAN
 
 uint8_t dronecan_cvt_power(int8_t power_dbm);
+uint16_t cvt_power(int8_t power_dbm);
+
+
+//-- modes and so on
+
+void frequency_band_str_to_strbuf(char* const s, uint8_t frequency_band, uint8_t len);
+void mode_str_to_strbuf(char* const s, uint8_t mode, uint8_t len);
 
 
 //-- bind phrase & power & version
@@ -187,24 +197,6 @@ void power_optstr_from_rfpower_list(char* const Power_optstr, const rfpower_t* c
 uint16_t version_to_u16(uint32_t version);
 uint32_t version_from_u16(uint16_t version_u16);
 void version_to_str(char* const s, uint32_t version);
-
-
-//-- tx tasks
-
-typedef enum {
-    TX_TASK_NONE = 0,
-    TX_TASK_RX_PARAM_SET,
-    TX_TASK_PARAM_STORE,
-    TX_TASK_BIND,
-    TX_TASK_PARAM_RELOAD,
-    TX_TASK_SYSTEM_BOOT,
-    TX_TASK_RESTART_CONTROLLER,
-    TX_TASK_FLASH_ESP,
-    TX_TASK_ESP_PASSTHROUGH,
-    TX_TASK_CLI_CHANGE_CONFIG_ID,
-    TX_TASK_HC04_PASSTHROUGH,
-    TX_TASK_CLI_HC04_SETPIN,
-} TX_TASK_ENUM;
 
 
 //-- display & keys

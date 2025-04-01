@@ -9,7 +9,7 @@
  run_make_firmwares.py
  3rd version, doesn't use make but calls gnu directly
  gave up on cmake, hence naive by hand
- version 5.11.2024
+ version 24.03.2025
 ********************************************************
 '''
 import os
@@ -449,6 +449,7 @@ MLRS_SOURCES_MODULES = [
     os.path.join('modules','sx12xx-lib','src','sx126x.cpp'),
     os.path.join('modules','sx12xx-lib','src','sx127x.cpp'),
     os.path.join('modules','sx12xx-lib','src','sx128x.cpp'),
+    os.path.join('modules','sx12xx-lib','src','lr11xx.cpp'),
     os.path.join('modules','stm32ll-lib','src','stdstm32.c'),
     ]
 
@@ -464,6 +465,7 @@ MLRS_SOURCES_COMMON = [
     os.path.join('Common','link_types.cpp'),
     os.path.join('Common','lq_counter.cpp'),
     os.path.join('Common','while.cpp'),
+    os.path.join('Common','tasks.cpp'),
     ]
 
 #add Common/dronecan/out/src/*.c if they exists # TODO: add a function to include them all 
@@ -1052,11 +1054,11 @@ TLIST = [
         'appendix' : '-elrs-bl',
     },{
         'target' : 'rx-R9MX-l433cb',                    'target_D' : 'RX_R9MX_868_L433CB',
-        'package' : 'yx',
+        'package' : 'ux',
         'extra_D_list' : [], 'appendix' : '',
     },{
         'target' : 'rx-R9MX-l433cb',                    'target_D' : 'RX_R9MX_868_L433CB',
-        'package' : 'yx',
+        'package' : 'ux',
         'extra_D_list' : ['MLRS_FEATURE_ELRS_BOOTLOADER'], 
         'appendix' : '-elrs-bl',
     },{
@@ -1162,10 +1164,6 @@ TLIST = [
         'target' : 'tx-Wio-E5-Mini-wle5jc',             'target_D' : 'TX_WIO_E5_MINI_WLE5JC',
         'extra_D_list' : [], 'appendix' : '',
     },{
-        'target' : 'tx-Wio-E5-Mini-wle5jc',             'target_D' : 'TX_WIO_E5_MINI_WLE5JC',
-        'extra_D_list' : ['MLRS_DEV_FEATURE_JRPIN5_SDIODE'],
-        'appendix' : '-sdiode', # just for RAVI :)
-    },{
 #-- tx E77 MBL
         'target' : 'tx-E77-MBLKit-wle5cc',              'target_D' : 'TX_E77_MBLKIT_WLE5CC',
         'extra_D_list' : ['MLRS_FEATURE_868_MHZ','MLRS_FEATURE_915_MHZ_FCC'],
@@ -1175,14 +1173,6 @@ TLIST = [
         'extra_D_list' : ['MLRS_FEATURE_433_MHZ'],
         'appendix' : '-400-tcxo',
     },{
-#        'target' : 'tx-E77-MBLKit-wle5cc',              'target_D' : 'TX_E77_MBLKIT_WLE5CC',
-#        'extra_D_list' : ['MLRS_FEATURE_868_MHZ','MLRS_FEATURE_915_MHZ_FCC','MLRS_DEV_FEATURE_JRPIN5_SDIODE'],
-#        'appendix' : '-900-sdiode-tcxo',
-#    },{
-#        'target' : 'tx-E77-MBLKit-wle5cc',              'target_D' : 'TX_E77_MBLKIT_WLE5CC',
-#        'extra_D_list' : ['MLRS_FEATURE_433_MHZ','MLRS_DEV_FEATURE_JRPIN5_SDIODE'],
-#        'appendix' : '-400-sdiode-tcxo',
-#    },{
         'target' : 'tx-E77-MBLKit-wle5cc',              'target_D' : 'TX_E77_MBLKIT_WLE5CC',
         'extra_D_list' : ['MLRS_FEATURE_868_MHZ','MLRS_FEATURE_915_MHZ_FCC','MLRS_FEATURE_E77_XTAL'],
         'appendix' : '-900-xtal',

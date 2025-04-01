@@ -106,7 +106,13 @@ void tBindBase::Init(void)
 void tBindBase::ConfigForBind(void)
 {
     // switch to 19 Mode, select lowest possible power
+    // we technically have to distinguish between MODE_19HZ or MODE_19HZ_7X
+    // configure_mode() however does currently do the same for both cases
+#ifdef DEVICE_HAS_DUAL_SX127x
+    configure_mode(MODE_19HZ_7X);
+#else
     configure_mode(MODE_19HZ);
+#endif
 
     sx.SetToIdle();
     sx2.SetToIdle();
@@ -224,7 +230,6 @@ void tBindBase::do_transmit(uint8_t antenna)
     txBindFrame.Ortho = Setup.Common[Config.ConfigId].Ortho;
 
     txBindFrame.crc = fmav_crc_calculate((uint8_t*)&txBindFrame, FRAME_TX_RX_LEN - 2);
-    sxSendFrame(antenna, &txBindFrame, FRAME_TX_RX_LEN, SEND_FRAME_TMO_MS);
 }
 
 

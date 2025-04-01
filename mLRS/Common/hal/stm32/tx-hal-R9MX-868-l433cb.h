@@ -29,6 +29,10 @@
 #define DEVICE_HAS_DEBUG_SWUART
 // #define DEVICE_HAS_BUZZER
 
+// Note on SERIAL_OR_COM:
+// The com uart is not initialized, the serial uart is, So, buffers are set as by the RX/TXBUFSIZE defines for serial.
+// The TXBUFSIZE setting for the com affects however the CLI's chunkenizer behavior.
+
 
 //-- Timers, Timing, EEPROM, and such stuff
 
@@ -63,7 +67,7 @@
 #define UARTE_USE_RX
 #define UARTE_RXBUFSIZE           512
 
-#define SWUART_USE_TIM15 // debug
+#define SWUART_USE_TIM1 // debug
 #define SWUART_TX_IO              IO_PA11
 #define SWUART_BAUD               115200
 #define SWUART_USE_TX

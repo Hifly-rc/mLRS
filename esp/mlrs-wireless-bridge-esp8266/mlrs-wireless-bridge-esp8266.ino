@@ -6,7 +6,7 @@
 // Basic but effective & reliable transparent WiFi <-> serial bridge.
 // Minimizes wireless traffic while respecting latency by better packeting algorithm.
 //*******************************************************
-// 1. June 2024
+// 16. Jan 2025
 //*********************************************************/
 // Adapted from mlrs-wireless-bridge for ESP32
 // ArduinoIDE 2.1.1, esp8266 by ESP8266 Community 3.1.2
@@ -131,7 +131,7 @@ void led_off(void) {}
 
 #if (WIRELESS_PROTOCOL <= 1) // WiFi TCP, UDP
 
-IPAddress ip_udp(ip[0], ip[1], ip[2], ip[3]+1); // usually the client/MissionPlanner gets assigned +1
+IPAddress ip_udp(ip[0], ip[1], ip[2], ip[3]+99); // the first DHCP client/MissionPlanner gets assigned +99
 IPAddress ip_gateway(0, 0, 0, 0);
 IPAddress netmask(255, 255, 255, 0);
 #if WIRELESS_PROTOCOL == 1 // UDP
@@ -198,7 +198,7 @@ void setup()
     WiFi.setOutputPower(WIFI_POWER); // set WiFi power, AP or STA must have been started, returns false if it fails
   #endif
   #if (WIRELESS_PROTOCOL == 1)
-    ip_udp[3] = 255; // somehow important
+    // ip_udp[3] = 255; // broadcast causes message loss for some reason
     udp.begin(port_udp);
   #else
     server.begin();

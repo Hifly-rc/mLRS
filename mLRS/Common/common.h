@@ -60,6 +60,7 @@ class tSerialPort : public tSerialBase
 #ifdef DEVICE_HAS_SERIAL_ON_USB // USE_USB
     void InitOnce(void) override { usb_init(); }
     void Init(void) override { SERORCOM_INIT; }
+    bool full(void) { IFNSER(false); return usb_tx_full(); }
     void putbuf(uint8_t* const buf, uint16_t len) override { IFNSER(); usb_putbuf(buf, len); }
     bool available(void) override { IFNSER(0); return usb_rx_available(); }
     char getc(void) override { IFNSER(0); return usb_getc(); }
@@ -68,6 +69,7 @@ class tSerialPort : public tSerialBase
 #else
     void Init(void) override { uartb_init(); SERORCOM_INIT; }
     void SetBaudRate(uint32_t baud) override { IFNSER(); uartb_setprotocol(baud, XUART_PARITY_NO, UART_STOPBIT_1); }
+    bool full(void) { IFNSER(false); return !uartb_tx_notfull(); }
     void putbuf(uint8_t* const buf, uint16_t len) override { IFNSER(); uartb_putbuf(buf, len); }
     bool available(void) override { IFNSER(0); return uartb_rx_available(); }
     char getc(void) override { IFNSER(0); return uartb_getc(); }
@@ -135,11 +137,13 @@ class tComPort : public tSerialBase
   public:
     // we do not initialize it as it is initialized by serial
 #ifdef DEVICE_HAS_SERIAL_ON_USB // USE_USB
+    bool full(void) { IFNCOM(false); return usb_tx_full(); }
     void putbuf(uint8_t* const buf, uint16_t len) override { IFNCOM(); usb_putbuf(buf, len); }
     bool available(void) override { IFNCOM(0); return usb_rx_available(); }
     char getc(void) override { IFNCOM(0); return usb_getc(); }
     void flush(void) override { IFNCOM(); usb_flush(); }
 #else
+    bool full(void) { IFNCOM(false); return !uartb_tx_notfull(); }
     void putbuf(uint8_t* const buf, uint16_t len) override { IFNCOM(); uartb_putbuf(buf, len); }
     bool available(void) override { IFNCOM(0); return uartb_rx_available(); }
     char getc(void) override { IFNCOM(0); return uartb_getc(); }
@@ -151,11 +155,13 @@ class tComPort : public tSerialBase
 #ifdef DEVICE_HAS_COM_ON_USB // USE_USB
     void InitOnce(void) override { usb_init(); }
     void Init(void) override { }
+    bool full(void) { return usb_tx_full(); }
     void putbuf(uint8_t* const buf, uint16_t len) override { usb_putbuf(buf, len); }
     bool available(void) override { return usb_rx_available(); }
     char getc(void) override { return usb_getc(); }
 #else
     void Init(void) override { uartc_init(); }
+    bool full(void) { return !uartc_tx_notfull(); }
     void putbuf(uint8_t* const buf, uint16_t len) override { uartc_putbuf(buf, len); }
     bool available(void) override { return uartc_rx_available(); }
     char getc(void) override { return uartc_getc(); }
@@ -171,6 +177,7 @@ class tSerial2Port : public tSerialBase
   public:
     void Init(void) override { uartd_init(); }
     void SetBaudRate(uint32_t baud) override { uartd_setprotocol(baud, XUART_PARITY_NO, UART_STOPBIT_1); }
+    bool full(void) { return !uartd_tx_notfull(); }
     void putbuf(uint8_t* const buf, uint16_t len) override { uartd_putbuf(buf, len); }
     bool available(void) override { return uartd_rx_available(); }
     char getc(void) override { return uartd_getc(); }
@@ -235,7 +242,7 @@ void sxReadFrame(uint8_t antenna, void* const data, void* const data2, uint8_t l
 
 void sxSendFrame(uint8_t antenna, void* const data, uint8_t len, uint16_t tmo_ms)
 {
-#if !defined DEVICE_HAS_DUAL_SX126x_SX128x && !defined DEVICE_HAS_DUAL_SX126x_SX126x
+#if !defined DEVICE_HAS_DUAL_SX126x_SX128x && !defined DEVICE_HAS_DUAL_SX126x_SX126x // SINGLE BAND
     if (antenna == ANTENNA_1) {
         sx.SendFrame((uint8_t*)data, len, tmo_ms);
         sx2.SetToIdle();
@@ -342,7 +349,8 @@ void FAIL_WSTATE(
 //-- check some sizes
 //-------------------------------------------------------
 
-STATIC_ASSERT(sizeof(tFrameStatus) == FRAME_TX_RX_HEADER_LEN - 2, "tFrameStatus len missmatch")
+STATIC_ASSERT(sizeof(tTxFrameStatus) == FRAME_TX_RX_HEADER_LEN - 2, "tTxFrameStatus len missmatch")
+STATIC_ASSERT(sizeof(tRxFrameStatus) == FRAME_TX_RX_HEADER_LEN - 2, "tRxFrameStatus len missmatch")
 STATIC_ASSERT(sizeof(tTxFrame) == FRAME_TX_RX_LEN, "tTxFrame len missmatch")
 STATIC_ASSERT(sizeof(tRxFrame) == FRAME_TX_RX_LEN, "tRxFrame len missmatch")
 

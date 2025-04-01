@@ -168,22 +168,28 @@ uint8_t crsf_cvt_power(int8_t power_dbm)
 
 uint8_t crsf_cvt_mode(uint8_t mode)
 {
-    if (mode == MODE_19HZ) return 19;
-    if (mode == MODE_31HZ) return 31;
-    if (mode == MODE_50HZ) return CRSF_RFMODE_50_HZ;
-    if (mode == MODE_FLRC_111HZ) return 111;
-    if (mode == MODE_FSK_50HZ) return CRSF_RFMODE_50_HZ;
+    switch (mode) {
+    case MODE_50HZ: return CRSF_RFMODE_50_HZ;
+    case MODE_31HZ: return 31;
+    case MODE_19HZ: return 19;
+    case MODE_FLRC_111HZ: return 111;
+    case MODE_FSK_50HZ: return CRSF_RFMODE_50_HZ;
+    case MODE_19HZ_7X: return 19;
+    }
     return UINT8_MAX;
 }
 
 
 uint8_t crsf_cvt_fps(uint8_t mode)
 {
-    if (mode == MODE_19HZ) return 2; // *10 in OpenTx !
-    if (mode == MODE_31HZ) return 3;
-    if (mode == MODE_50HZ) return 5;
-    if (mode == MODE_FLRC_111HZ) return 11;
-    if (mode == MODE_FSK_50HZ) return 5;
+    switch (mode) {
+    case MODE_50HZ: return 5; // *10 in OpenTx !
+    case MODE_31HZ: return 3;
+    case MODE_19HZ: return 2;
+    case MODE_FLRC_111HZ: return 11;
+    case MODE_FSK_50HZ: return 5;
+    case MODE_19HZ_7X: return 2;
+    }
     return UINT8_MAX;
 }
 
@@ -200,17 +206,18 @@ uint8_t crsf_cvt_rssi_rx(int8_t rssi_i8)
 uint8_t crsf_cvt_rssi_tx(int8_t rssi_i8)
 {
     if (rssi_i8 == RSSI_INVALID) return 0;
+    if (rssi_i8 > RSSI_MAX) return RSSI_MAX; // limit to -1
     return rssi_i8;
 }
 
 
-uint8_t crsf_cvt_rssi_percent(int8_t rssi, int16_t receiver_sensitivity_dbm)
+uint8_t crsf_cvt_rssi_percent(int8_t rssi_i8, int16_t receiver_sensitivity_dbm)
 {
-    if (rssi == RSSI_INVALID) return 255;
-    if (rssi >= -50) return 100;
-    if (rssi <= receiver_sensitivity_dbm) return 0;
+    if (rssi_i8 == RSSI_INVALID) return 255;
+    if (rssi_i8 >= -50) return 100;
+    if (rssi_i8 <= receiver_sensitivity_dbm) return 0;
 
-    int32_t r = (int32_t)rssi - receiver_sensitivity_dbm;
+    int32_t r = (int32_t)rssi_i8 - receiver_sensitivity_dbm;
     int32_t m = (int32_t)(-50) - receiver_sensitivity_dbm;
 
     return (100 * r + 49)/m;
@@ -255,6 +262,7 @@ uint8_t crsf_crc8_update(uint8_t crc, const uint8_t* buf, uint16_t len)
 #pragma GCC optimize ("O3")
 
 // generated from https://crccalc.com/, for CRC-8/DVB-S2
+// matches table give in CRSF specs, https://github.com/tbs-fpv/tbs-crsf-spec/blob/main/crsf.md#crc
 const uint8_t crsf_crc8_table[256] = {
     0x00 , 0xd5 , 0x7f , 0xaa , 0xfe , 0x2b , 0x81 , 0x54,
     0x29 , 0xfc , 0x56 , 0x83 , 0xd7 , 0x02 , 0xa8 , 0x7d,
@@ -357,12 +365,50 @@ uint8_t dronecan_cvt_power(int8_t power_dbm)
 }
 
 
+uint16_t cvt_power(int8_t power_dbm)
+{
+    if (power_dbm < 0) return 0;
+    if (power_dbm > 33) return 2000;
+    return power_table_dBm_to_mW[power_dbm];
+}
+
+
+//-- modes and so on
+// ATTENTION: must not be longer than FREQUENCY_BAND_STR_LEN, MODE_STR_LEN, w/o terminating NULL character!
+
+void frequency_band_str_to_strbuf(char* const s, uint8_t frequency_band, uint8_t len)
+{
+    switch (frequency_band) {
+        case SETUP_FREQUENCY_BAND_2P4_GHZ: strbufstrcpy(s, "2.4G", len); break;
+        case SETUP_FREQUENCY_BAND_915_MHZ_FCC: strbufstrcpy(s, "915M", len); break;
+        case SETUP_FREQUENCY_BAND_868_MHZ: strbufstrcpy(s, "868M", len); break;
+        case SETUP_FREQUENCY_BAND_433_MHZ: strbufstrcpy(s, "433M", len); break;
+        case SETUP_FREQUENCY_BAND_70_CM_HAM: strbufstrcpy(s, "70cm", len); break;
+        case SETUP_FREQUENCY_BAND_866_MHZ_IN: strbufstrcpy(s, "866M", len); break;
+        default: strbufstrcpy(s, "?", len);
+    }
+}
+
+void mode_str_to_strbuf(char* const s, uint8_t mode, uint8_t len)
+{
+    switch (mode) {
+        case MODE_50HZ: strbufstrcpy(s, "50Hz", len); break;
+        case MODE_31HZ: strbufstrcpy(s, "31Hz", len); break;
+        case MODE_19HZ: strbufstrcpy(s, "19Hz", len); break;
+        case MODE_FLRC_111HZ: strbufstrcpy(s, "FLRC", len); break;
+        case MODE_FSK_50HZ: strbufstrcpy(s, "FSK", len); break;
+        case MODE_19HZ_7X: strbufstrcpy(s, "19Hz7x", len); break;
+        default: strbufstrcpy(s, "?", len);
+    }
+}
+
+
 //-- bind phrase & power & version
 
 bool is_valid_bindphrase_char(char c)
 {
     return ((c >= 'a' && c <= 'z') ||
-            (c >= '0' && c <= '9' ) ||
+            (c >= '0' && c <= '9') ||
             (c == '_') || (c == '#') || (c == '-') || (c == '.'));
 }
 
@@ -542,6 +588,8 @@ char ss[32];
 
 //-- auxiliary functions
 
+
+// copy a string into a buffer with max len chars
 void strbufstrcpy(char* const res, const char* const src, uint16_t len)
 {
     memset(res, '\0', len);
@@ -552,6 +600,7 @@ void strbufstrcpy(char* const res, const char* const src, uint16_t len)
 }
 
 
+// copy a buffer into a string with max len chars (i.e. len + 1 size)
 void strstrbufcpy(char* const res, const char* const src, uint16_t len)
 {
     memset(res, '\0', len + 1); // this ensures that res is terminated with a '\0'

@@ -55,6 +55,7 @@ typedef enum {
     MODE_19HZ,
     MODE_FLRC_111HZ,
     MODE_FSK_50HZ,
+    MODE_19HZ_7X,
     MODE_NUM,
 } MODE_ENUM;
 
@@ -318,6 +319,13 @@ typedef enum {
 } SX126x_LORA_CONFIG_ENUM;
 
 
+typedef enum {
+    LR11xx_LORA_CONFIG_BW500_SF5_CR4_5 = 0,
+    LR11xx_LORA_CONFIG_BW500_SF6_CR4_5,
+    LR11xx_LORA_CONFIG_NUM,
+} LR11xx_LORA_CONFIG_ENUM;
+
+
 //-------------------------------------------------------
 // Setup Types
 // ATTENTION: only extend/append, never change sequence
@@ -504,6 +512,7 @@ typedef struct
     uint16_t frame_rate_hz;
     uint16_t connect_tmo_systicks;
     uint16_t connect_listen_hop_cnt;
+    uint8_t connect_sync_cnt_max;
 
     uint8_t Diversity; // snapshot of Setup's Diversity at startup
     bool ReceiveUseAntenna1;
