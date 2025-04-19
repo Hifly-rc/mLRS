@@ -123,6 +123,10 @@
 #include "tx-hal-betafpv-micro-1w-2400-esp32.h"
 #endif
 
+#ifdef TX_ELRS_BETAFPV_MICRO_1W_900_ESP32
+#include "tx-hal-betafpv-micro-1w-900-esp32.h"
+#endif
+
 #ifdef TX_ELRS_RADIOMASTER_BANDIT_MICRO_900_ESP32
 #include "tx-hal-radiomaster-bandit-series-900-esp32.h"
 #endif
