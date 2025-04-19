@@ -75,14 +75,14 @@ class AtMode {
     unsigned long startup_tmo_ms;
     uint8_t at_pos;
     uint8_t at_buf[128];
-    
+
     bool restart_needed;
 
     void restart(void);
 };
 
 
-void AtMode::Init(uint8_t _gpio_pin) 
+void AtMode::Init(uint8_t _gpio_pin)
 {
     gpio0_pin = _gpio_pin;
     pinMode(gpio0_pin, INPUT);
@@ -91,16 +91,18 @@ void AtMode::Init(uint8_t _gpio_pin)
     gpio_is_low = false;
     restart_needed = false;
 
+#ifndef ESP8266
     // https://github.com/espressif/esp-idf/issues/12473
     esp_log_level_set("wifi", ESP_LOG_NONE);
     // ?? esp_wifi_nan_stop();
+#endif
 
     startup_tmo_ms = 750 + millis(); // stay in AT loop for at least 750 ms, 0 = startup timeout ended
 }
 
 
-bool AtMode::Do(void) 
-{ 
+bool AtMode::Do(void)
+{
     // handle toggles in GPIO0
     if (!gpio_is_low) {
         if (digitalRead(GPIO0_IO) == LOW) { // toggled LOW
@@ -120,9 +122,9 @@ bool AtMode::Do(void)
     // handle startup timeout
     if (startup_tmo_ms) {
         if (millis() > startup_tmo_ms) startup_tmo_ms = 0;
-    } 
+    }
 
-    // when not in startup phase and not GPIO0 low, do to WiFi loop 
+    // when not in startup phase and not GPIO0 low, do to WiFi loop
     if (!startup_tmo_ms && !gpio_is_low) return false;
 
     int avail = SERIAL.available();
@@ -139,7 +141,7 @@ bool AtMode::Do(void)
             if (strncmp((char*)at_buf, at_cmds[i], at_pos) != 0) continue; // not even a possible match
             possible_match = true;
             if (strcmp((char*)at_buf, at_cmds[i]) == 0) { // full match
-                if (i == AT_NAME_QUERY || i == AT_BAUD_QUERY || i == AT_WIFICHANNEL_QUERY || 
+                if (i == AT_NAME_QUERY || i == AT_BAUD_QUERY || i == AT_WIFICHANNEL_QUERY ||
                     i == AT_WIFIPOWER_QUERY || i == AT_PROTOCOL_QUERY) {
                     at_buf[0] = 'O';
                     at_buf[1] = 'K';
@@ -230,7 +232,7 @@ bool AtMode::Do(void)
 
 void AtMode::restart(void)
 {
-    preferences.end();    
+    preferences.end();
     ESP.restart();
 }
 
