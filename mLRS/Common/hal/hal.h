@@ -93,7 +93,7 @@ Note: Some "high-level" features are set for each device in the device_conf.h fi
 
 
 #include "device_conf.h"
-
+#include "hifly/hifly_hal.h"
 
 //-- MATEKSYS mLRS devices
 

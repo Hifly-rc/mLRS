@@ -29,7 +29,7 @@ The default selection of frequency bands can be overruled by feature defines.
 
 
 #include "../common_conf.h"
-
+#include "hifly/hifly_conf.h"
 
 //-- MATEKSYS mLRS devices
 
