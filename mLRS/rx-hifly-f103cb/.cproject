@@ -193,20 +193,6 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.release.1087159494;com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.release.1087159494.;com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.1806144561;com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.2105847226">
-			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1557258602;com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1557258602.;com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.1894991154;com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.input.cpp.1337016584">
-			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.release.1087159494;com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.release.1087159494.;com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.1070578104;com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.cpp.compiler.input.cpp.2084549559">
-			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1557258602;com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1557258602.;com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.2104175735;com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.131493417">
-			<autodiscovery enabled="false" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-	</storageModule>
 	<storageModule moduleId="refreshScope"/>
+	<storageModule moduleId="scannerConfiguration"/>
 </cproject>
