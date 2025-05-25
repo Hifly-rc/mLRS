@@ -1,0 +1,101 @@
+#--------------------------------------------------
+# application
+#--------------------------------------------------
+
+#-- list of targets
+
+TLIST = [
+    {
+#RX
+#-- rx diy
+        'target' : 'rx-wle5cc',             'target_D' : 'RX_HIFLY_WLE5CC',
+        'extra_D_list' : ['DEVICE_NAME_SE77RX10'],
+        'appendix' : '-se77rx-tcxo'
+    },{
+        'target' : 'rx-wle5cc',             'target_D' : 'RX_HIFLY_WLE5CC',
+        'extra_D_list' : ['DEVICE_NAME_SE77RX10', 'MLRS_FEATURE_E77_XTAL'],
+        'appendix' : '-se77rx-xtal'
+    },{
+        'target' : 'rx-f103cb',             'target_D' : 'RX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE28RX12'],
+        'appendix' : '-se28rx12'
+    },{
+        'target' : 'rx-f103cb',             'target_D' : 'RX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE28RX20'],
+        'appendix' : '-se28rx20'
+    },{
+        'target' : 'rx-f103cb',             'target_D' : 'RX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE22RX12'],
+        'appendix' : '-se22rx12'
+    },{
+        'target' : 'rx-f103cb',             'target_D' : 'RX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE28RX21'],
+        'appendix' : '-se28rx21'
+    },{
+        'target' : 'rx-f103cb',             'target_D' : 'RX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_DE28RX21'],
+        'appendix' : '-de28rx21'
+    },{
+        'target' : 'rx-f103cb',             'target_D' : 'RX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE22RX21'],
+        'appendix' : '-se22rx21'
+    },{
+        'target' : 'rx-f103cb',             'target_D' : 'RX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE220RX21'],
+        'appendix' : '-se220rx21'
+    },{
+        'target' : 'rx-f103cb',             'target_D' : 'RX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE32RX21'],
+        'appendix' : '-se32rx21'
+    },{
+#TX
+#-- tx diy
+        'target' : 'tx-wle5cc',             'target_D' : 'TX_HIFLY_WLE5CC',
+        'extra_D_list' : ['DEVICE_NAME_SE77TX10'],
+        'appendix' : '-se77tx-tcxo'
+    },{
+        'target' : 'tx-wle5cc',             'target_D' : 'TX_HIFLY_WLE5CC',
+        'extra_D_list' : ['DEVICE_NAME_SE77RX10', 'MLRS_FEATURE_E77_XTAL'],
+        'appendix' : '-se77tx-xtal'
+    },{
+        'target' : 'tx-f103cb',     'target_D' : 'TX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE28TX12'],
+        'appendix' : '-se28tx12'
+    },{
+        'target' : 'tx-f103cb',     'target_D' : 'TX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE28TX12S'],
+        'appendix' : '-se28tx12s'
+    },{
+        'target' : 'tx-f103cb',     'target_D' : 'TX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE28TX20','MLRS_FEATURE_OLED'],
+        'appendix' : '-se28tx20'
+    },{
+        'target' : 'tx-f103cb',     'target_D' : 'TX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE220TX20','MLRS_FEATURE_OLED'],
+        'appendix' : '-se220tx20'
+    },{
+        'target' : 'tx-f103cb',     'target_D' : 'TX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE22TX20','MLRS_FEATURE_OLED'],
+        'appendix' : '-se22tx20'
+    },{
+        'target' : 'tx-f103cb',     'target_D' : 'TX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE28TX21','MLRS_FEATURE_OLED'],
+        'appendix' : '-se28tx21'
+    },{
+        'target' : 'tx-f103cb',     'target_D' : 'TX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_DE28TX21','MLRS_FEATURE_OLED'],
+        'appendix' : '-de28tx21'
+    },{
+        'target' : 'tx-f103cb',     'target_D' : 'TX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE22TX21','MLRS_FEATURE_OLED'],
+        'appendix' : '-se22tx21'
+    },{
+        'target' : 'tx-f103cb',     'target_D' : 'TX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE220TX21','MLRS_FEATURE_OLED'],
+        'appendix' : '-se220tx21'
+    },{
+        'target' : 'tx-f103cb',     'target_D' : 'TX_HIFLY_F103CB',
+        'extra_D_list' : ['DEVICE_NAME_SE32TX21','MLRS_FEATURE_OLED'],
+        'appendix' : '-se32tx21'
+    }
+    ]

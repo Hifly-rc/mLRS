@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>rx-hifly-wle5cc</name>
+	<name>tx-f103cb</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -37,9 +37,9 @@
 			<locationURI>WORKSPACE_LOC/Common</locationURI>
 		</link>
 		<link>
-			<name>CommonRx</name>
+			<name>CommonTx</name>
 			<type>2</type>
-			<locationURI>WORKSPACE_LOC/CommonRx</locationURI>
+			<locationURI>WORKSPACE_LOC/CommonTx</locationURI>
 		</link>
 		<link>
 			<name>modules</name>
