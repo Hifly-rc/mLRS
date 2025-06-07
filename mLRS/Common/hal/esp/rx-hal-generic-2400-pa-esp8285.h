@@ -7,10 +7,11 @@
 //********************************************************
 
 //-------------------------------------------------------
-// ESP8285, ELRS GENERIC 2400 PA RX
+// ESP8285, ELRS GENERIC 2400 DIVERSTIY PA RX
 //-------------------------------------------------------
 
 #define DEVICE_HAS_SINGLE_LED_RGB
+//#define DEVICE_HAS_SINGLE_LED
 #define DEVICE_HAS_NO_DEBUG
 //#define DEVICE_HAS_SERIAL_OR_DEBUG
 
@@ -30,10 +31,9 @@
 
 
 //-- SX1: SX12xx & SPI
-
 #define SPI_CS_IO                 IO_P15
-#define SPI_FREQUENCY             16000000L
-#define SX_RESET                  IO_P2
+#define SPI_FREQUENCY             18000000L
+#define SX_RESET                  IO_P16
 #define SX_BUSY                   IO_P5
 #define SX_DIO1                   IO_P4
 #define SX_TX_EN                  IO_P10
@@ -46,8 +46,8 @@ void sx_init_gpio(void)
     gpio_init(SX_DIO1, IO_MODE_INPUT_ANALOG);
     gpio_init(SX_BUSY, IO_MODE_INPUT_PU);
     gpio_init(SX_TX_EN, IO_MODE_OUTPUT_PP_LOW);
-    gpio_init(SX_RX_EN, IO_MODE_OUTPUT_PP_LOW);
     gpio_init(SX_RESET, IO_MODE_OUTPUT_PP_HIGH);
+    gpio_init(SX_RX_EN, IO_MODE_OUTPUT_PP_HIGH);
 }
 
 IRAM_ATTR bool sx_busy_read(void)
@@ -67,18 +67,16 @@ IRAM_ATTR void sx_amp_receive(void)
     gpio_high(SX_RX_EN);
 }
 
-void sx_dio_init_exti_isroff(void) {}
-
-void sx_dio_enable_exti_isr(void)
+IRAM_ATTR void sx_dio_enable_exti_isr(void)
 {
     attachInterrupt(SX_DIO1, SX_DIO_EXTI_IRQHandler, RISING);
 }
 
-IRAM_ATTR void sx_dio_exti_isr_clearflag(void) {}
+void sx_dio_init_exti_isroff(void) {}
+void sx_dio_exti_isr_clearflag(void) {}
 
 
 //-- Button
-
 #define BUTTON                    IO_P0
 
 void button_init(void)
@@ -94,12 +92,12 @@ IRAM_ATTR bool button_pressed(void)
 
 //-- LEDs
 #include <NeoPixelBus.h>
-#define LED_RED                    IO_P16
+#define LED_RED                    IO_P2
 bool ledRedState;
 bool ledGreenState;
 bool ledBlueState;
 
-NeoPixelBus<NeoGrbFeature, NeoEsp32I2s0Ws2812xMethod> ledRGB(1, LED_RED);
+NeoPixelBus<NeoGrbFeature, NeoEsp8266DmaWs2812xMethod> ledRGB(1, LED_RED);
 
 void leds_init(void)
 {
@@ -169,10 +167,6 @@ IRAM_ATTR void led_blue_toggle(void)
 {
     if (ledBlueState) { led_blue_off(); } else { led_blue_on(); }
 }
-
-IRAM_ATTR void led_red_off(void) { gpio_low(LED_RED); }
-IRAM_ATTR void led_red_on(void) { gpio_high(LED_RED); }
-IRAM_ATTR void led_red_toggle(void) { gpio_toggle(LED_RED); }
 
 
 //-- POWER
