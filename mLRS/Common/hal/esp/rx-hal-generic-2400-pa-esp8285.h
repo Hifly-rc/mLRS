@@ -98,7 +98,6 @@ bool ledGreenState;
 bool ledBlueState;
 
 NeoPixelBus<NeoGrbFeature, NeoEsp8266DmaWs2812xMethod> ledRGB(1, LED_RED);
-
 void leds_init(void)
 {
     ledRGB.Begin();

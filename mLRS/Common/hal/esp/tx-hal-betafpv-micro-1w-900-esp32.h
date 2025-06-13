@@ -312,10 +312,11 @@ IRAM_ATTR void fan_set_power(int8_t power_dbm)
 #define RFPOWER_DEFAULT 1 // index into rfpower_list array
 
 const rfpower_t rfpower_list[] = {
-    {.dbm = POWER_10_DBM, .mW = 10},
-    {.dbm = POWER_20_DBM, .mW = 100},
-    {.dbm = POWER_24_DBM, .mW = 250},
-    {.dbm = POWER_27_DBM, .mW = 500},
-    {.dbm = POWER_30_DBM, .mW = 1000},
+    { .dbm = POWER_MIN, .mW = INT8_MIN },
+    { .dbm = POWER_17_DBM, .mW = 50 },
+    { .dbm = POWER_20_DBM, .mW = 100 },
+    { .dbm = POWER_24_DBM, .mW = 250 },
+    { .dbm = POWER_27_DBM, .mW = 500 },
+    { .dbm = POWER_30_DBM, .mW = 1000 },
 };
 
