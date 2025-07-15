@@ -101,15 +101,19 @@ IRAM_ATTR void led_red_toggle(void) { gpio_toggle(LED_RED); }
 
 
 //-- POWER
-#define POWER_GAIN_DBM            23 // gain of a PA stage if present
-#define POWER_SX1280_MAX_DBM      SX1280_POWER_0_DBM  // maximum allowed sx power
-#define POWER_USE_DEFAULT_RFPOWER_CALC
 
-#define RFPOWER_DEFAULT           0 // index into rfpower_list array
+#define POWER_PA_E28_2G4M27SX
+#include "../hal-power-pa.h"
+//-- POWER
+//#define POWER_GAIN_DBM            23 // gain of a PA stage if present
+//#define POWER_SX1280_MAX_DBM      SX1280_POWER_0_DBM  // maximum allowed sx power
+//#define POWER_USE_DEFAULT_RFPOWER_CALC
 
-const rfpower_t rfpower_list[] = {
-    { .dbm = POWER_10_DBM, .mW = 10 },
-    { .dbm = POWER_20_DBM, .mW = 100 },
-    { .dbm = POWER_23_DBM, .mW = 200 },
-};
+//#define RFPOWER_DEFAULT           0 // index into rfpower_list array
+
+//const rfpower_t rfpower_list[] = {
+    //{ .dbm = POWER_10_DBM, .mW = 10 },
+    //{ .dbm = POWER_20_DBM, .mW = 100 },
+    //{ .dbm = POWER_23_DBM, .mW = 200 },
+//};
 

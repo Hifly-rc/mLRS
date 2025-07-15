@@ -306,7 +306,7 @@ IRAM_ATTR void fan_set_power(int8_t power_dbm)
 //-- POWER
 
 #define POWER_GAIN_DBM 8 // Use 8 for E22-900M30S
-#define POWER_SX126X_MAX_DBM SX126X_POWER_20_DBM // maximum allowed sx power
+#define POWER_SX126X_MAX_DBM SX126X_POWER_22_DBM // maximum allowed sx power
 #define POWER_USE_DEFAULT_RFPOWER_CALC
 
 #define RFPOWER_DEFAULT 1 // index into rfpower_list array
