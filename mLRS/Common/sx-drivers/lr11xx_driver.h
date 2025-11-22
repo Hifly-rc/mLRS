@@ -24,6 +24,7 @@
 // SX Driver
 //-------------------------------------------------------
 
+// the first two are for 900 MHz and the last three are for 2.4 GHz
 const tSxLoraConfiguration Lr11xxLoraConfiguration[] = {
     { .SpreadingFactor = LR11XX_LORA_SF5,
       .Bandwidth = LR11XX_LORA_BW_500,
@@ -45,6 +46,39 @@ const tSxLoraConfiguration Lr11xxLoraConfiguration[] = {
       .CrcEnabled = LR11XX_LORA_CRC_DISABLE,
       .InvertIQ = LR11XX_LORA_IQ_NORMAL,
       .TimeOverAir = 22560,
+      .ReceiverSensitivity = -112,
+    },
+    { .SpreadingFactor = LR11XX_LORA_SF5,
+      .Bandwidth = LR11XX_LORA_BW_800,
+      .CodingRate = LR11XX_LORA_CR_LI_4_5,
+      .PreambleLength = 12,
+      .HeaderType = LR11XX_LORA_HEADER_DISABLE,
+      .PayloadLength = FRAME_TX_RX_LEN,
+      .CrcEnabled = LR11XX_LORA_CRC_DISABLE,
+      .InvertIQ = LR11XX_LORA_IQ_NORMAL,
+      .TimeOverAir = 7892,
+      .ReceiverSensitivity = -105,
+    },
+    { .SpreadingFactor = LR11XX_LORA_SF6,
+      .Bandwidth = LR11XX_LORA_BW_800,
+      .CodingRate = LR11XX_LORA_CR_LI_4_5,
+      .PreambleLength = 12,
+      .HeaderType = LR11XX_LORA_HEADER_DISABLE,
+      .PayloadLength = FRAME_TX_RX_LEN,
+      .CrcEnabled = LR11XX_LORA_CRC_DISABLE,
+      .InvertIQ = LR11XX_LORA_IQ_NORMAL,
+      .TimeOverAir = 13418,
+      .ReceiverSensitivity = -108,
+    },
+    { .SpreadingFactor = LR11XX_LORA_SF7,
+      .Bandwidth = LR11XX_LORA_BW_800,
+      .CodingRate = LR11XX_LORA_CR_LI_4_5,
+      .PreambleLength = 12,
+      .HeaderType = LR11XX_LORA_HEADER_DISABLE,
+      .PayloadLength = FRAME_TX_RX_LEN,
+      .CrcEnabled = LR11XX_LORA_CRC_DISABLE,
+      .InvertIQ = LR11XX_LORA_IQ_NORMAL,
+      .TimeOverAir = 23527,
       .ReceiverSensitivity = -112,
     }
 };
@@ -70,7 +104,7 @@ const tSxGfskConfiguration Lr11xxGfskConfiguration[] = {
 
 
 #ifdef POWER_USE_DEFAULT_RFPOWER_CALC
-void lr11xx_rfpower_calc(const int8_t power_dbm, uint8_t* sx_power, int8_t* actual_power_dbm, const int8_t GAIN_DBM, const uint8_t LR11XX_MAX_DBM)
+void lr11xx_rfpower_calc_default(const int8_t power_dbm, uint8_t* sx_power, int8_t* actual_power_dbm, const int8_t GAIN_DBM, const uint8_t LR11XX_MAX_DBM)
 {
     int16_t power_sx = (int16_t)power_dbm - GAIN_DBM;
 
@@ -113,6 +147,8 @@ class Lr11xxDriverCommon : public Lr11xxDriverBase
                             config->Bandwidth,
                             config->CodingRate,
                             LR11XX_LORA_LDR_OFF);
+
+        if (Config.Mode == MODE_19HZ_7X) { EnableSx127xCompatibility(); }
 
         SetPacketParams(config->PreambleLength,
                         config->HeaderType,
@@ -203,6 +239,7 @@ class Lr11xxDriverCommon : public Lr11xxDriverBase
             case SX_FHSS_CONFIG_FREQUENCY_BAND_866_MHZ_IN: CalibImage(LR11XX_CAL_IMG_863_MHZ_1, LR11XX_CAL_IMG_863_MHZ_2); break;
             case SX_FHSS_CONFIG_FREQUENCY_BAND_433_MHZ: CalibImage(LR11XX_CAL_IMG_430_MHZ_1, LR11XX_CAL_IMG_430_MHZ_2); break;
             case SX_FHSS_CONFIG_FREQUENCY_BAND_70_CM_HAM: CalibImage(LR11XX_CAL_IMG_430_MHZ_1, LR11XX_CAL_IMG_430_MHZ_2); break;
+            case SX_FHSS_CONFIG_FREQUENCY_BAND_2P4_GHZ: break;
             default:
                 while(1){} // protection
         }
@@ -216,11 +253,17 @@ class Lr11xxDriverCommon : public Lr11xxDriverBase
             SetPacketType(LR11XX_PACKET_TYPE_GFSK);
             SetGfskConfigurationByIndex(0, Config.FrameSyncWord);
         }
+
+        if (gconfig->FrequencyBand == SX_FHSS_CONFIG_FREQUENCY_BAND_2P4_GHZ) {
+            SetPaConfig(LR11XX_PA_SELECT_HF_PA, LR11XX_REG_PA_SUPPLY_INTERNAL, 0, 0);
+        } else {
 #ifndef SX_USE_LP_PA
-        SetPaConfig(LR11XX_PA_SELECT_HP_PA, LR11XX_REG_PA_SUPPLY_VBAT, LR11XX_PA_DUTY_CYCLE_22_DBM, LR11XX_PA_HP_SEL_22_DBM);
+            SetPaConfig(LR11XX_PA_SELECT_HP_PA, LR11XX_REG_PA_SUPPLY_VBAT, LR11XX_PA_DUTY_CYCLE_22_DBM, LR11XX_PA_HP_SEL_22_DBM);
 #else
-        SetPaConfig(LR11XX_PA_SELECT_LP_PA, LR11XX_REG_PA_SUPPLY_INTERNAL, LR11XX_PA_DUTY_CYCLE_14_DBM, 0);
+            SetPaConfig(LR11XX_PA_SELECT_LP_PA, LR11XX_REG_PA_SUPPLY_INTERNAL, LR11XX_PA_DUTY_CYCLE_14_DBM, 0);
 #endif
+        }
+
         SetRfPower_dbm(gconfig->Power_dbm);
         ClearIrq(LR11XX_IRQ_ALL);
         SetFs();
@@ -324,8 +367,10 @@ class Lr11xxDriverCommon : public Lr11xxDriverBase
         return actual_power_dbm;
     }
 
-  private:
+  protected:
     tSxGlobalConfig* gconfig;
+
+  private:
     const tSxLoraConfiguration* lora_configuration;
     const tSxGfskConfiguration* gfsk_configuration;
     uint8_t sx_power;
@@ -396,9 +441,9 @@ class Lr11xxDriver : public Lr11xxDriverCommon
     void _rfpower_calc(int8_t power_dbm, uint8_t* sx_power, int8_t* actual_power_dbm) override
     {
 #ifdef POWER_USE_DEFAULT_RFPOWER_CALC
-        lr11xx_rfpower_calc(power_dbm, sx_power, actual_power_dbm, POWER_GAIN_DBM, POWER_LR11XX_MAX_DBM);
+        lr11xx_rfpower_calc_default(power_dbm, sx_power, actual_power_dbm, POWER_GAIN_DBM, POWER_LR11XX_MAX_DBM);
 #else
-        lr11xx_rfpower_calc(power_dbm, sx_power, actual_power_dbm);
+        lr11xx_rfpower_calc(power_dbm, sx_power, actual_power_dbm, gconfig->FrequencyBand);
 #endif
     }
 
@@ -532,9 +577,9 @@ class Lr11xxDriver2 : public Lr11xxDriverCommon
     void _rfpower_calc(int8_t power_dbm, uint8_t* sx_power, int8_t* actual_power_dbm) override
     {
 #ifdef POWER_USE_DEFAULT_RFPOWER_CALC
-        lr11xx_rfpower_calc(power_dbm, sx_power, actual_power_dbm, POWER_GAIN_DBM, POWER_LR11XX_MAX_DBM);
+        lr11xx_rfpower_calc_default(power_dbm, sx_power, actual_power_dbm, POWER_GAIN_DBM, POWER_LR11XX_MAX_DBM);
 #else
-        lr11xx_rfpower_calc(power_dbm, sx_power, actual_power_dbm);
+        lr11xx_rfpower_calc(power_dbm, sx_power, actual_power_dbm, gconfig->FrequencyBand);
 #endif
     }
 

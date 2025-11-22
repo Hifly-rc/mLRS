@@ -135,15 +135,7 @@
 #include "tx-hal-radiomaster-ranger-2400-esp32.h"
 #endif
 
-
-// -- DIY
-
-#ifdef RX_DIY_DEV_900_ESP8266
-#include "rx-hal-diy-dev-900-esp8266.h"
+#ifdef TX_ELRS_RADIOMASTER_NOMAD_ESP32
+#include "tx-hal-radiomaster-nomad-esp32.h"
 #endif
-
-#ifdef RX_DIY_DEV_900_ESP32
-#include "rx-hal-diy-dev-900-esp32.h"
-#endif
-
 
